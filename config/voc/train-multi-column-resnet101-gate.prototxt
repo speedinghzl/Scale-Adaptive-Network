@@ -12,7 +12,7 @@ layer {
   python_param {
     module: 'seg_layer.voc_attention'
     layer: 'ImageSegDataLayer'
-    param_str: "{'batch_size':1 ,'voc_dir': '../dataset/data/' ,'mean': (104.008, 116.669, 122.675),'root_folder': '../dataset/voc/', 'source': 'list/voc/train_aug.txt', 'mirror': True, 'crop_size': (473, 473)}"
+    param_str: "{'batch_size':1 ,'voc_dir': '../dataset/voc/' ,'mean': (104.008, 116.669, 122.675),'root_folder': '../dataset/voc/', 'source': 'list/voc/train_aug.txt', 'mirror': True, 'crop_size': (473, 473)}"
   }
   include: { phase: TRAIN }
 }
@@ -7211,9 +7211,9 @@ layer {
   }
   convolution_param {
     num_output: 512
-    kernel_size: 7
-    dilation: 4
-    pad: 12
+    kernel_size: 3
+    dilation: 6
+    pad: 6
     weight_filler {
       type: "gaussian"
       std: 0.01
@@ -7247,7 +7247,7 @@ layer {
     decay_mult: 0
   }
   convolution_param {
-    num_output: 7
+    num_output: 21
     kernel_size: 1
     weight_filler {
       type: "gaussian"
@@ -7312,8 +7312,8 @@ layer {
   }
   convolution_param {
     num_output: 512
-    kernel_size: 7
-    dilation: 4
+    kernel_size: 3
+    dilation: 12
     pad: 12
     weight_filler {
       type: "gaussian"
@@ -7348,7 +7348,7 @@ layer {
     decay_mult: 0
   }
   convolution_param {
-    num_output: 7
+    num_output: 21
     kernel_size: 1
     weight_filler {
       type: "gaussian"
@@ -7412,9 +7412,9 @@ layer {
   }
   convolution_param {
     num_output: 512
-    kernel_size: 7
-    dilation: 4
-    pad: 12
+    kernel_size: 3
+    dilation: 18
+    pad: 18
     weight_filler {
       type: "gaussian"
       std: 0.01
@@ -7448,7 +7448,7 @@ layer {
     decay_mult: 0
   }
   convolution_param {
-    num_output: 7
+    num_output: 21
     kernel_size: 1
     weight_filler {
       type: "gaussian"
@@ -7627,6 +7627,7 @@ layer {
   type: "SoftmaxWithLoss"
   bottom: "fc8_part"
   bottom: "label_shrink"
+  top: "loss"
   include {
     phase: TRAIN
   }
@@ -7662,6 +7663,7 @@ layer {
   type: "SoftmaxWithLoss"
   bottom: "attention_b"
   bottom: "label_shrink_at"
+  top: "loss_at"
   include {
     phase: TRAIN
   }
@@ -7676,6 +7678,81 @@ layer {
   bottom: "attention_b"
   bottom: "label_shrink_at"
   top: "accuracy_at"
+  seg_accuracy_param {
+    ignore_label: 255
+  }
+}
+####### loss for branch #######
+layer {
+  name: "loss_1s"
+  type: "SoftmaxWithLoss"
+  bottom: "fc8_part_2"
+  bottom: "label_shrink"
+  top: "loss_1s"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_1s"
+  type: "SegAccuracy"
+  bottom: "fc8_part_2"
+  bottom: "label_shrink"
+  top: "accuracy_1s"
+  seg_accuracy_param {
+    ignore_label: 255
+  }
+}
+
+layer {
+  name: "loss_2s"
+  type: "SoftmaxWithLoss"
+  bottom: "fc8_part_1"
+  bottom: "label_shrink"
+  top: "loss_2s"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_2s"
+  type: "SegAccuracy"
+  bottom: "fc8_part_1"
+  bottom: "label_shrink"
+  top: "accuracy_2s"
+  seg_accuracy_param {
+    ignore_label: 255
+  }
+}
+
+layer {
+  name: "loss_3s"
+  type: "SoftmaxWithLoss"
+  bottom: "fc8_part_3"
+  bottom: "label_shrink"
+  top: "loss_3s"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_3s"
+  type: "SegAccuracy"
+  bottom: "fc8_part_3"
+  bottom: "label_shrink"
+  top: "accuracy_3s"
   seg_accuracy_param {
     ignore_label: 255
   }

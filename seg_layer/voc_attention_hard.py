@@ -182,7 +182,7 @@ class SimpleTransformer:
         label_1s, label_2s, label_3s = np.full(label.shape, self.ignore_label, dtype=np.uint8), np.full(label.shape, self.ignore_label, dtype=np.uint8), np.full(label.shape, self.ignore_label, dtype=np.uint8)
         # label_1s, label_2s, label_3s, label_at = np.zeros_like(label), np.zeros_like(label), np.zeros_like(label), np.zeros_like(label)
         # label_1s[label==255] = 255; label_2s[label==255] = 255; label_3s[label==255] = 255
-        label_at = np.zeros_like(label); label_at[label==255] = 255
+        label_at = np.full(label.shape, self.ignore_label, dtype=np.uint8)
 
         def fitness(annos_item):
             x1, y1, x2, y2 = annos_item[0]
@@ -202,19 +202,19 @@ class SimpleTransformer:
 
             index = (s0==cls_id)
             if sq < 12544:
-                s1[index] = s0[index]
-                s2[index] = 255
-                s3[index] = 255
+                s1[:] = s0[:]
+                # s2[index] = 255
+                # s3[index] = 255
                 at[index] = 1
             elif sq >= 12544 and sq < 50176:
-                s1[index] = 255
-                s2[index] = s0[index]
-                s3[index] = 255
+                # s1[index] = 255
+                s2[:] = s0[:]
+                # s3[index] = 255
                 at[index] = 2
             elif sq >= 50176:
-                s1[index] = 255
-                s2[index] = 255
-                s3[index] = s0[index]
+                # s1[index] = 255
+                # s2[index] = 255
+                s3[:] = s0[:]
                 at[index] = 3
 
         #at[s0==255] = label[s0==255]

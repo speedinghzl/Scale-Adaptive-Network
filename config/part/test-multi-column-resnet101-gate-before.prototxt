@@ -1,4 +1,5 @@
 name: "Resnet_multi_column"
+
 input: "data"
 input_shape {
   dim: 1 # batchsize
@@ -6,7 +7,6 @@ input_shape {
   dim: 321 # width
   dim: 321 # height
 }
-
 
 ###################### resolution 1 #####################
 layer {
@@ -7148,13 +7148,11 @@ layer {
 	type: "ReLU"
 }
 
-############################### classifiers ##########################
-
-################ part 1 ####################
+############ reduce res5c ##########
 layer {
   bottom: "res5c"
-  top: "fc6_1s"
-  name: "fc6_1s"
+  top: "attention_reduce"
+  name: "attention_reduce"
   type: "Convolution"
 #  strict_dim: false
   param {
@@ -7166,7 +7164,7 @@ layer {
     decay_mult: 0
   }
   convolution_param {
-    num_output: 512
+    num_output: 1024
     kernel_size: 1
     weight_filler {
       type: "gaussian"
@@ -7179,120 +7177,13 @@ layer {
   }
 }
 
-layer {
-	bottom: "fc6_1s"
-	top: "fc6_1s"
-	name: "fc6_relu_1s"
-	type: "ReLU"
-}
+####################### attention map #######################
 
 layer {
-  bottom: "fc6_1s"
-  top: "fc7_1s"
-  name: "fc7_1s"
+  name: "attention_a"
   type: "Convolution"
-#  strict_dim: false
-  param {
-    lr_mult: 10
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 20
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 512
-    kernel_size: 3
-    dilation: 6
-    pad: 6
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-
-layer {
-	bottom: "fc7_1s"
-	top: "fc7_1s"
-	name: "fc7_relu_1s"
-	type: "ReLU"
-}
-
-layer {
-  bottom: "fc7_1s"
-  top: "fc8_part_1"
-  name: "fc8_part_1"
-  type: "Convolution"
-#  strict_dim: false
-  param {
-    lr_mult: 10
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 20
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 21
-    kernel_size: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-
-################ part 2 ####################
-layer {
-  bottom: "res5c"
-  top: "fc6_2s"
-  name: "fc6_2s"
-  type: "Convolution"
-#  strict_dim: false
-  param {
-    lr_mult: 10
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 20
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 512
-    kernel_size: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-
-layer {
-	bottom: "fc6_2s"
-	top: "fc6_2s"
-	name: "fc6_relu_2s"
-	type: "ReLU"
-}
-
-layer {
-  bottom: "fc6_2s"
-  top: "fc7_2s"
-  name: "fc7_2s"
-  type: "Convolution"
-#  strict_dim: false
+  bottom: "attention_reduce"
+  top: "attention_a"
   param {
     lr_mult: 10
     decay_mult: 1
@@ -7306,180 +7197,6 @@ layer {
     kernel_size: 3
     dilation: 12
     pad: 12
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-
-layer {
-	bottom: "fc7_2s"
-	top: "fc7_2s"
-	name: "fc7_relu_2s"
-	type: "ReLU"
-}
-
-layer {
-  bottom: "fc7_2s"
-  top: "fc8_part_2"
-  name: "fc8_part_2"
-  type: "Convolution"
-#  strict_dim: false
-  param {
-    lr_mult: 10
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 20
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 21
-    kernel_size: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-################ part 3 ####################
-layer {
-  bottom: "res5c"
-  top: "fc6_3s"
-  name: "fc6_3s"
-  type: "Convolution"
-#  strict_dim: false
-  param {
-    lr_mult: 10
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 20
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 512
-    kernel_size: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-
-layer {
-	bottom: "fc6_3s"
-	top: "fc6_3s"
-	name: "fc6_relu_3s"
-	type: "ReLU"
-}
-
-layer {
-  bottom: "fc6_3s"
-  top: "fc7_3s"
-  name: "fc7_3s"
-  type: "Convolution"
-#  strict_dim: false
-  param {
-    lr_mult: 10
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 20
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 512
-    kernel_size: 3
-    dilation: 18
-    pad: 18
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-
-layer {
-	bottom: "fc7_3s"
-	top: "fc7_3s"
-	name: "fc7_relu_3s"
-	type: "ReLU"
-}
-
-layer {
-  bottom: "fc7_3s"
-  top: "fc8_part_3"
-  name: "fc8_part_3"
-  type: "Convolution"
-#  strict_dim: false
-  param {
-    lr_mult: 10
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 20
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 21
-    kernel_size: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-      value: 0
-    }
-  }
-}
-
-### attention map #######
-
-layer {
-  name: "fc7_concat"
-  type: "Concat"
-  bottom: "fc7_1s"
-  bottom: "fc7_2s"
-  bottom: "fc7_3s"
-  top: "fc7_concat"
-}
-
-layer {
-  name: "attention_a"
-  type: "Convolution"
-  bottom: "fc7_concat"
-  top: "attention_a"
-  param {
-    lr_mult: 10
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 20
-    decay_mult: 0
-  }
-  convolution_param {
-    num_output: 512
-    kernel_size: 3
-    pad: 1
     weight_filler {
       type: "gaussian"
       std: 0.01
@@ -7567,7 +7284,7 @@ layer { bottom: "attenton_3s" bottom: "attenton_bg_power" top: "attenton_3s_bg" 
 layer {
   name: "gate_1s"
   type: "SpatialProduct"
-  bottom: "fc8_part_1"
+  bottom: "attention_reduce"
   bottom: "attenton_1s_bg"
   top: "gate_1s"
 }
@@ -7575,7 +7292,7 @@ layer {
 layer {
   name: "gate_2s"
   type: "SpatialProduct"
-  bottom: "fc8_part_2"
+  bottom: "attention_reduce"
   bottom: "attenton_2s_bg"
   top: "gate_2s"
 }
@@ -7583,16 +7300,217 @@ layer {
 layer {
   name: "gate_3s"
   type: "SpatialProduct"
-  bottom: "fc8_part_3"
+  bottom: "attention_reduce"
   bottom: "attenton_3s_bg"
   top: "gate_3s"
 }
 
-### SUM the four branches
+############################### classifiers ##########################
+
+################ part 1 ####################
 layer {
   bottom: "gate_1s"
+  top: "fc6_1s"
+  name: "fc6_1s"
+  type: "Convolution"
+#  strict_dim: false
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 20
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    kernel_size: 3
+    dilation: 12
+    pad: 12
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+	bottom: "fc6_1s"
+	top: "fc6_1s"
+	name: "fc6_relu_1s"
+	type: "ReLU"
+}
+
+layer {
+  bottom: "fc6_1s"
+  top: "fc8_part_1"
+  name: "fc8_part_1"
+  type: "Convolution"
+#  strict_dim: false
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 20
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 7
+    kernel_size: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+################ part 2 ####################
+layer {
   bottom: "gate_2s"
+  top: "fc6_2s"
+  name: "fc6_2s"
+  type: "Convolution"
+#  strict_dim: false
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 20
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    kernel_size: 3
+    dilation: 12
+    pad: 12
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+	bottom: "fc6_2s"
+	top: "fc6_2s"
+	name: "fc6_relu_2s"
+	type: "ReLU"
+}
+
+layer {
+  bottom: "fc6_2s"
+  top: "fc8_part_2"
+  name: "fc8_part_2"
+  type: "Convolution"
+#  strict_dim: false
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 20
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 7
+    kernel_size: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+################ part 3 ####################
+layer {
   bottom: "gate_3s"
+  top: "fc6_3s"
+  name: "fc6_3s"
+  type: "Convolution"
+#  strict_dim: false
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 20
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 1024
+    kernel_size: 3
+    dilation: 12
+    pad: 12
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+	bottom: "fc6_3s"
+	top: "fc6_3s"
+	name: "fc6_relu_3s"
+	type: "ReLU"
+}
+
+layer {
+  bottom: "fc6_3s"
+  top: "fc8_part_3"
+  name: "fc8_part_3"
+  type: "Convolution"
+#  strict_dim: false
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 20
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 7
+    kernel_size: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+
+
+### SUM the four branches
+layer {
+  bottom: "fc8_part_1"
+  bottom: "fc8_part_2"
+  bottom: "fc8_part_3"
   top: "fc8_part"
   name: "fc8_part"
   type: "Eltwise"
@@ -7602,7 +7520,6 @@ layer {
 }
 
 #################
-
 layer {
   bottom: "fc8_part"
   top: "interp"

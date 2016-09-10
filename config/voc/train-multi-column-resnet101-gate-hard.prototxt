@@ -1,12 +1,21 @@
-name: "Resnet_multi_column"
-input: "data"
-input_shape {
-  dim: 1 # batchsize
-  dim: 3 # number of colour channels - rgb
-  dim: 321 # width
-  dim: 321 # height
-}
+_name: "Resnet_multi_column"
 
+layer {
+  name: "data"
+  type: "Python"
+  top: "data"
+  top: "label_1s"
+  top: "label_2s"
+  top: "label_3s"
+  top: "label"
+  top: "label_at"
+  python_param {
+    module: 'seg_layer.voc_attention_hard'
+    layer: 'ImageSegDataLayer'
+    param_str: "{'batch_size':1 ,'voc_dir': '../dataset/voc/' ,'mean': (104.008, 116.669, 122.675),'root_folder': '../dataset/voc/', 'source': 'list/voc/train_aug.txt', 'mirror': True, 'crop_size': (473, 473)}"
+  }
+  include: { phase: TRAIN }
+}
 
 ###################### resolution 1 #####################
 layer {
@@ -7158,11 +7167,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 10
+    lr_mult: 1
     decay_mult: 1
   }
   param {
-    lr_mult: 20
+    lr_mult: 2
     decay_mult: 0
   }
   convolution_param {
@@ -7259,11 +7268,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 10
+    lr_mult: 1
     decay_mult: 1
   }
   param {
-    lr_mult: 20
+    lr_mult: 2
     decay_mult: 0
   }
   convolution_param {
@@ -7359,11 +7368,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 10
+    lr_mult: 1
     decay_mult: 1
   }
   param {
-    lr_mult: 20
+    lr_mult: 2
     decay_mult: 0
   }
   convolution_param {
@@ -7602,100 +7611,186 @@ layer {
 }
 
 #################
-
 layer {
+  bottom: "label"
+  top: "label_shrink"
+  name: "label_shrink"
+  type: "Interp"
+  interp_param {
+    shrink_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
   bottom: "fc8_part"
-  top: "interp"
-  name: "interp"
+  bottom: "label_shrink"
+  top: "loss"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy"
+  type: "SegAccuracy"
+  bottom: "fc8_part"
+  bottom: "label_shrink"
+  top: "accuracy"
+  seg_accuracy_param {
+    ignore_label: 255
+  }
+}
+###################
+layer {
+  bottom: "label_at"
+  top: "label_shrink_at"
+  name: "label_shrink_at"
   type: "Interp"
   interp_param {
-    zoom_factor: 8
+    shrink_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}
+layer {
+  name: "loss_at"
+  type: "SoftmaxWithLoss"
+  bottom: "attention_b"
+  bottom: "label_shrink_at"
+  top: "loss_at"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_at"
+  type: "SegAccuracy"
+  bottom: "attention_b"
+  bottom: "label_shrink_at"
+  top: "accuracy_at"
+  seg_accuracy_param {
+    ignore_label: 255
+  }
+}
+####### loss for branch #######
+layer {
+  bottom: "label_1s"
+  top: "label_shrink_1s"
+  name: "label_shrink_1s"
+  type: "Interp"
+  interp_param {
+    shrink_factor: 8
     pad_beg: 0
     pad_end: 0
   }
 }
 
-
 layer {
+  name: "loss_1s"
+  type: "SoftmaxWithLoss"
   bottom: "fc8_part_1"
-  top: "interp_1s"
-  name: "interp_1s"
+  bottom: "label_shrink_1s"
+  top: "loss_1s"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_1s"
+  type: "SegAccuracy"
+  bottom: "fc8_part_1"
+  bottom: "label_shrink_1s"
+  top: "accuracy_1s"
+  seg_accuracy_param {
+    ignore_label: 255
+  }
+}
+
+
+layer {
+  bottom: "label_2s"
+  top: "label_shrink_2s"
+  name: "label_shrink_2s"
   type: "Interp"
   interp_param {
-    zoom_factor: 8
+    shrink_factor: 8
     pad_beg: 0
     pad_end: 0
   }
 }
-
 layer {
+  name: "loss_2s"
+  type: "SoftmaxWithLoss"
   bottom: "fc8_part_2"
-  top: "interp_2s"
-  name: "interp_2s"
-  type: "Interp"
-  interp_param {
-    zoom_factor: 8
-    pad_beg: 0
-    pad_end: 0
+  bottom: "label_shrink_2s"
+  top: "loss_2s"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_2s"
+  type: "SegAccuracy"
+  bottom: "fc8_part_2"
+  bottom: "label_shrink_2s"
+  top: "accuracy_2s"
+  seg_accuracy_param {
+    ignore_label: 255
   }
 }
 
 layer {
+  bottom: "label_3s"
+  top: "label_shrink_3s"
+  name: "label_shrink_3s"
+  type: "Interp"
+  interp_param {
+    shrink_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}
+layer {
+  name: "loss_3s"
+  type: "SoftmaxWithLoss"
   bottom: "fc8_part_3"
-  top: "interp_3s"
-  name: "interp_3s"
-  type: "Interp"
-  interp_param {
-    zoom_factor: 8
-    pad_beg: 0
-    pad_end: 0
+  bottom: "label_shrink_3s"
+  top: "loss_3s"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_3s"
+  type: "SegAccuracy"
+  bottom: "fc8_part_3"
+  bottom: "label_shrink_3s"
+  top: "accuracy_3s"
+  seg_accuracy_param {
+    ignore_label: 255
   }
 }
 
-layer {
-  bottom: "attenton_1s"
-  top: "interp_at_1s"
-  name: "interp_at_1s"
-  type: "Interp"
-  interp_param {
-    zoom_factor: 8
-    pad_beg: 0
-    pad_end: 0
-  }
-}
 
-layer {
-  bottom: "attenton_2s"
-  top: "interp_at_2s"
-  name: "interp_at_2s"
-  type: "Interp"
-  interp_param {
-    zoom_factor: 8
-    pad_beg: 0
-    pad_end: 0
-  }
-}
-
-layer {
-  bottom: "attenton_3s"
-  top: "interp_at_3s"
-  name: "interp_at_3s"
-  type: "Interp"
-  interp_param {
-    zoom_factor: 8
-    pad_beg: 0
-    pad_end: 0
-  }
-}
-
-layer {
-  bottom: "attention_softmax"
-  top: "interp_at_sf"
-  name: "interp_at_sf"
-  type: "Interp"
-  interp_param {
-    zoom_factor: 8
-    pad_beg: 0
-    pad_end: 0
-  }
-}

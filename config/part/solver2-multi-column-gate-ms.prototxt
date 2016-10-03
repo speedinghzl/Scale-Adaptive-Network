@@ -1,4 +1,4 @@
-train_net: "config/part/train-multi-column-resnet101-ds.prototxt"
+train_net: "config/part/train-multi-column-resnet101-gate-ms.prototxt"
 
 lr_policy: "poly"
 power: 0.9
@@ -11,5 +11,5 @@ momentum: 0.9
 weight_decay: 0.0005
 
 snapshot: 10000
-snapshot_prefix: "model/part/multicolumn_res101_ds"
+snapshot_prefix: "model/part/multicolumn_res101_ds_gate_ms"
 solver_mode: GPU

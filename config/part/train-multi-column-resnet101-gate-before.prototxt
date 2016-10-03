@@ -7314,11 +7314,42 @@ layer {
   top: "gate_3s"
 }
 
+layer {
+  bottom: "attention_reduce"
+  bottom: "gate_1s"
+  top: "gate_concat_1s"
+  name: "gate_concat_1s"
+  type: "Eltwise"
+  eltwise_param {
+    operation: SUM
+  }
+}
+layer {
+  bottom: "attention_reduce"
+  bottom: "gate_2s"
+  top: "gate_concat_2s"
+  name: "gate_concat_2s"
+  type: "Eltwise"
+  eltwise_param {
+    operation: SUM
+  }
+}
+layer {
+  bottom: "attention_reduce"
+  bottom: "gate_3s"
+  top: "gate_concat_3s"
+  name: "gate_concat_3s"
+  type: "Eltwise"
+  eltwise_param {
+    operation: SUM
+  }
+}
+
 ############################### classifiers ##########################
 
 ################ part 1 ####################
 layer {
-  bottom: "gate_1s"
+  bottom: "gate_concat_1s"
   top: "fc6_1s"
   name: "fc6_1s"
   type: "Convolution"
@@ -7384,7 +7415,7 @@ layer {
 
 ################ part 2 ####################
 layer {
-  bottom: "gate_2s"
+  bottom: "gate_concat_2s"
   top: "fc6_2s"
   name: "fc6_2s"
   type: "Convolution"
@@ -7449,7 +7480,7 @@ layer {
 }
 ################ part 3 ####################
 layer {
-  bottom: "gate_3s"
+  bottom: "gate_concat_3s"
   top: "fc6_3s"
   name: "fc6_3s"
   type: "Convolution"

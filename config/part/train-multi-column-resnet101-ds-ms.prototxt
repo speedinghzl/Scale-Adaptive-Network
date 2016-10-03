@@ -7474,6 +7474,58 @@ layer {
   }
 }
 
+#### reconstruct from high and low level feature ####
+
+layer { bottom: "res3b3" top: "recons_a" name: "recons_a" type: "Convolution"
+  param { lr_mult: 10 decay_mult: 1 }
+  param { lr_mult: 20 decay_mult: 0 }
+  convolution_param { num_output: 512 kernel_size: 3 pad: 1 stride: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0}
+  }
+}
+
+layer { bottom: "recons_a" top: "recons_a" name: "recons_relu_a" type: "ReLU" }
+
+layer { bottom: "recons_a" top: "recons_b" name: "recons_b" type: "Convolution"
+  param { lr_mult: 10 decay_mult: 1 }
+  param { lr_mult: 20 decay_mult: 0 }
+  convolution_param { num_output: 512 kernel_size: 3 pad: 1 stride: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0}
+  }
+}
+
+layer { bottom: "recons_b" top: "recons_b" name: "recons_relu_b" type: "ReLU" }
+
+layer { bottom: "recons_b" top: "recons_branch" name: "recons_branch" type: "Convolution"
+  param { lr_mult: 10 decay_mult: 1 }
+  param { lr_mult: 20 decay_mult: 0 }
+  convolution_param { num_output: 7 kernel_size: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0}
+  }
+}
+
+#### Boundary masking #####
+layer { name: "fc8_part_softmax" bottom: "fc8_part" top: "fc8_part_softmax" type: "Softmax" }
+
+layer { name: "fc8_part_neg" bottom: "fc8_part_softmax" top: "fc8_part_neg" type: "Power" 
+power_param { power: 1 scale: -1 shift: 0 } }
+
+layer { name: "fc8_part_pool" bottom: "fc8_part_softmax" top: "fc8_part_pool" type: "Pooling"
+		pooling_param { kernel_size: 9 stride: 1 pad: 4 pool: MAX } }
+
+layer { name: "fc8_neg_pool" bottom: "fc8_part_neg" top: "fc8_neg_pool" type: "Pooling"
+		pooling_param { kernel_size: 9 stride: 1 pad: 4 pool: MAX } }
+
+layer { name: "boundary_mask" bottom: "fc8_part_pool" bottom: "fc8_neg_pool" top: "boundary_mask"  type: "Eltwise" eltwise_param { operation: SUM } }
+
+####### combine ########
+layer { name: "boundary_map" bottom: "recons_branch" bottom: "boundary_mask" top: "boundary_map"  type: "Eltwise" eltwise_param { operation: PROD } }
+
+layer { name: "fine_scoremap" bottom: "boundary_map" bottom: "fc8_part" top: "fine_scoremap"  type: "Eltwise" eltwise_param { operation: SUM } }
+
 #################
 layer {
   bottom: "label"
@@ -7505,6 +7557,54 @@ layer {
   bottom: "fc8_part"
   bottom: "label_shrink"
   top: "accuracy"
+  seg_accuracy_param {
+    ignore_label: 255
+  }
+}
+###################
+layer {
+  name: "loss_recons"
+  type: "SoftmaxWithLoss"
+  bottom: "recons_branch"
+  bottom: "label_shrink"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_recons"
+  type: "SegAccuracy"
+  bottom: "recons_branch"
+  bottom: "label_shrink"
+  top: "accuracy_recons"
+  seg_accuracy_param {
+    ignore_label: 255
+  }
+}
+###################
+layer {
+  name: "loss_fine"
+  type: "SoftmaxWithLoss"
+  bottom: "fine_scoremap"
+  bottom: "label_shrink"
+  include {
+    phase: TRAIN
+  }
+  loss_param {
+    ignore_label: 255
+  }
+  loss_weight: 1
+}
+layer {
+  name: "accuracy_fine"
+  type: "SegAccuracy"
+  bottom: "fine_scoremap"
+  bottom: "label_shrink"
+  top: "accuracy_fine"
   seg_accuracy_param {
     ignore_label: 255
   }

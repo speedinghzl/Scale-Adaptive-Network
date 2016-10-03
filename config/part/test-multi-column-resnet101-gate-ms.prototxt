@@ -1,21 +1,12 @@
 name: "Resnet_multi_column"
-
-layer {
-  name: "data"
-  type: "Python"
-  top: "data"
-  top: "label_1s"
-  top: "label_2s"
-  top: "label_3s"
-  top: "label"
-  top: "label_at"
-  python_param {
-    module: 'seg_layer.part_attention'
-    layer: 'ImageSegDataLayer'
-    param_str: "{'batch_size':1 ,'voc_dir': '../dataset/data/' ,'mean': (104.008, 116.669, 122.675),'root_folder': '../dataset/data/', 'source': 'list/part/train_list_part.txt', 'mirror': True, 'crop_size': (505, 505)}"
-  }
-  include: { phase: TRAIN }
+input: "data"
+input_shape {
+  dim: 1 # batchsize
+  dim: 3 # number of colour channels - rgb
+  dim: 321 # width
+  dim: 321 # height
 }
+
 
 ###################### resolution 1 #####################
 layer {
@@ -7167,11 +7158,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7202,11 +7193,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7239,11 +7230,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7268,11 +7259,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7303,11 +7294,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7340,11 +7331,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7368,11 +7359,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7403,11 +7394,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7440,11 +7431,11 @@ layer {
   type: "Convolution"
 #  strict_dim: false
   param {
-    lr_mult: 1
+    lr_mult: 10
     decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 20
     decay_mult: 0
   }
   convolution_param {
@@ -7461,11 +7452,146 @@ layer {
   }
 }
 
+### attention map #######
+
+layer {
+  name: "fc7_concat"
+  type: "Concat"
+  bottom: "fc7_1s"
+  bottom: "fc7_2s"
+  bottom: "fc7_3s"
+  top: "fc7_concat"
+}
+
+layer {
+  name: "attention_a"
+  type: "Convolution"
+  bottom: "fc7_concat"
+  top: "attention_a"
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 20
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 512
+    kernel_size: 3
+    pad: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "relu_attention_a"
+  type: "ReLU"
+  bottom: "attention_a"
+  top: "attention_a"
+}
+
+layer {
+  name: "attention_drop"
+  type: "Dropout"
+  bottom: "attention_a"
+  top: "attention_a"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  name: "attention_b"
+  type: "Convolution"
+  bottom: "attention_a"
+  top: "attention_b"
+  param {
+    lr_mult: 10
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 20
+    decay_mult: 0
+  }
+  convolution_param {
+    num_output: 4
+    kernel_size: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "attention_softmax"
+  type: "Softmax"
+  bottom: "attention_b"
+  top: "attention_softmax"
+}
+
+layer {
+  name: "slice"
+  type: "Slice"
+  bottom: "attention_softmax"
+  top: "attenton_bg"
+  top: "attenton_1s"
+  top: "attenton_2s"
+  top: "attenton_3s"
+  slice_param {
+    axis: 1
+    slice_point: 1
+    slice_point: 2
+    slice_point: 3
+  }
+}
+
+#layer { bottom: "attenton_3s" bottom: "attenton_bg" top: "attenton_3s_bg" name: "Eltwise_1s" type: "Eltwise" eltwise_param { operation: SUM } }
+layer { bottom: "attenton_1s" bottom: "attenton_bg" top: "attenton_1s_bg" name: "Eltwise_1s" type: "Eltwise" eltwise_param { operation: SUM } }
+layer { bottom: "attenton_2s" bottom: "attenton_bg" top: "attenton_2s_bg" name: "Eltwise_2s" type: "Eltwise" eltwise_param { operation: SUM } }
+layer { bottom: "attenton_3s" bottom: "attenton_bg" top: "attenton_3s_bg" name: "Eltwise_3s" type: "Eltwise" eltwise_param { operation: SUM } }
+
+layer {
+  name: "gate_1s"
+  type: "SpatialProduct"
+  bottom: "fc8_part_1"
+  bottom: "attenton_1s_bg"
+  top: "gate_1s"
+}
+
+layer {
+  name: "gate_2s"
+  type: "SpatialProduct"
+  bottom: "fc8_part_2"
+  bottom: "attenton_2s_bg"
+  top: "gate_2s"
+}
+
+layer {
+  name: "gate_3s"
+  type: "SpatialProduct"
+  bottom: "fc8_part_3"
+  bottom: "attenton_3s_bg"
+  top: "gate_3s"
+}
+
 ### SUM the four branches
 layer {
-  bottom: "fc8_part_1"
-  bottom: "fc8_part_2"
-  bottom: "fc8_part_3"
+  bottom: "gate_1s"
+  bottom: "gate_2s"
+  bottom: "gate_3s"
   top: "fc8_part"
   name: "fc8_part"
   type: "Eltwise"
@@ -7474,147 +7600,152 @@ layer {
   }
 }
 
+#### reconstruct from high and low level feature ####
+
+layer { bottom: "res3b3" top: "recons_a" name: "recons_a" type: "Convolution"
+  param { lr_mult: 10 decay_mult: 1 }
+  param { lr_mult: 20 decay_mult: 0 }
+  convolution_param { num_output: 512 kernel_size: 3 pad: 1 stride: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0}
+  }
+}
+
+layer { bottom: "recons_a" top: "recons_a" name: "recons_relu_a" type: "ReLU" }
+
+layer { bottom: "recons_a" top: "recons_b" name: "recons_b" type: "Convolution"
+  param { lr_mult: 10 decay_mult: 1 }
+  param { lr_mult: 20 decay_mult: 0 }
+  convolution_param { num_output: 512 kernel_size: 3 pad: 1 stride: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0}
+  }
+}
+
+layer { bottom: "recons_b" top: "recons_b" name: "recons_relu_b" type: "ReLU" }
+
+layer { bottom: "recons_b" top: "recons_branch" name: "recons_branch" type: "Convolution"
+  param { lr_mult: 10 decay_mult: 1 }
+  param { lr_mult: 20 decay_mult: 0 }
+  convolution_param { num_output: 7 kernel_size: 1
+    weight_filler { type: "gaussian" std: 0.01 }
+    bias_filler { type: "constant" value: 0}
+  }
+}
+
+#### Boundary masking #####
+
+layer { name: "fc8_part_neg" bottom: "fc8_part" top: "fc8_part_neg" type: "Power" 
+power_param { power: 1 scale: -1 shift: 0 } }
+
+layer { name: "fc8_part_pool" bottom: "fc8_part" top: "fc8_part_pool" type: "Pooling"
+		pooling_param { kernel_size: 9 stride: 1 pad: 4 pool: MAX } }
+
+layer { name: "fc8_neg_pool" bottom: "fc8_part_neg" top: "fc8_neg_pool" type: "Pooling"
+		pooling_param { kernel_size: 9 stride: 1 pad: 4 pool: MAX } }
+
+layer { name: "boundary_mask" bottom: "fc8_part_pool" bottom: "fc8_neg_pool" top: "boundary_mask"  type: "Eltwise" eltwise_param { operation: SUM } }
+
+####### combine ########
+layer { name: "boundary_map" bottom: "recons_branch" bottom: "boundary_mask" top: "boundary_map"  type: "Eltwise" eltwise_param { operation: PROD } }
+
+layer { name: "fine_scoremap" bottom: "boundary_map" bottom: "fc8_part" top: "fine_scoremap"  type: "Eltwise" eltwise_param { operation: SUM } }
+
 #################
+
 layer {
-  bottom: "label"
-  top: "label_shrink"
-  name: "label_shrink"
+  bottom: "fine_scoremap"
+  top: "interp"
+  name: "interp"
   type: "Interp"
   interp_param {
-    shrink_factor: 8
+    zoom_factor: 8
     pad_beg: 0
     pad_end: 0
   }
 }
-layer {
-  name: "loss"
-  type: "SoftmaxWithLoss"
-  bottom: "fc8_part"
-  bottom: "label_shrink"
-  include {
-    phase: TRAIN
-  }
-  loss_param {
-    ignore_label: 255
-  }
-  loss_weight: 1
-}
-layer {
-  name: "accuracy"
-  type: "SegAccuracy"
-  bottom: "fc8_part"
-  bottom: "label_shrink"
-  top: "accuracy"
-  seg_accuracy_param {
-    ignore_label: 255
-  }
-}
 
-###################
 
 layer {
-  bottom: "label_1s"
-  top: "label_shrink_1s"
-  name: "label_shrink_1s"
-  type: "Interp"
-  interp_param {
-    shrink_factor: 8
-    pad_beg: 0
-    pad_end: 0
-  }
-}
-layer {
-  name: "loss_1s"
-  type: "SoftmaxWithLoss"
   bottom: "fc8_part_1"
-  bottom: "label_shrink_1s"
-  include {
-    phase: TRAIN
-  }
-  loss_param {
-    ignore_label: 255
-  }
-  loss_weight: 1
-}
-layer {
-  name: "accuracy_1s"
-  type: "SegAccuracy"
-  bottom: "fc8_part_1"
-  bottom: "label_shrink_1s"
-  top: "accuracy_1s"
-  seg_accuracy_param {
-    ignore_label: 255
-  }
-}
-#----------------------------
-layer {
-  bottom: "label_2s"
-  top: "label_shrink_2s"
-  name: "label_shrink_2s"
+  top: "interp_1s"
+  name: "interp_1s"
   type: "Interp"
   interp_param {
-    shrink_factor: 8
+    zoom_factor: 8
     pad_beg: 0
     pad_end: 0
-  }
-}
-layer {
-  name: "loss_2s"
-  type: "SoftmaxWithLoss"
-  bottom: "fc8_part_2"
-  bottom: "label_shrink_2s"
-  include {
-    phase: TRAIN
-  }
-  loss_param {
-    ignore_label: 255
-  }
-  loss_weight: 1
-}
-layer {
-  name: "accuracy_2s"
-  type: "SegAccuracy"
-  bottom: "fc8_part_2"
-  bottom: "label_shrink_2s"
-  top: "accuracy_2s"
-  seg_accuracy_param {
-    ignore_label: 255
-  }
-}
-#----------------------------
-layer {
-  bottom: "label_3s"
-  top: "label_shrink_3s"
-  name: "label_shrink_3s"
-  type: "Interp"
-  interp_param {
-    shrink_factor: 8
-    pad_beg: 0
-    pad_end: 0
-  }
-}
-layer {
-  name: "loss_3s"
-  type: "SoftmaxWithLoss"
-  bottom: "fc8_part_3"
-  bottom: "label_shrink_3s"
-  include {
-    phase: TRAIN
-  }
-  loss_param {
-    ignore_label: 255
-  }
-  loss_weight: 1
-}
-layer {
-  name: "accuracy_3s"
-  type: "SegAccuracy"
-  bottom: "fc8_part_3"
-  bottom: "label_shrink_3s"
-  top: "accuracy_3s"
-  seg_accuracy_param {
-    ignore_label: 255
   }
 }
 
-layer { name: "silence" type: "Silence" bottom: "label_at" }
+layer {
+  bottom: "fc8_part_2"
+  top: "interp_2s"
+  name: "interp_2s"
+  type: "Interp"
+  interp_param {
+    zoom_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}
+
+layer {
+  bottom: "fc8_part_3"
+  top: "interp_3s"
+  name: "interp_3s"
+  type: "Interp"
+  interp_param {
+    zoom_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}
+
+layer {
+  bottom: "attenton_1s"
+  top: "interp_at_1s"
+  name: "interp_at_1s"
+  type: "Interp"
+  interp_param {
+    zoom_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}
+
+layer {
+  bottom: "attenton_2s"
+  top: "interp_at_2s"
+  name: "interp_at_2s"
+  type: "Interp"
+  interp_param {
+    zoom_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}
+
+layer {
+  bottom: "attenton_3s"
+  top: "interp_at_3s"
+  name: "interp_at_3s"
+  type: "Interp"
+  interp_param {
+    zoom_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}
+
+layer {
+  bottom: "attention_softmax"
+  top: "interp_at_sf"
+  name: "interp_at_sf"
+  type: "Interp"
+  interp_param {
+    zoom_factor: 8
+    pad_beg: 0
+    pad_end: 0
+  }
+}

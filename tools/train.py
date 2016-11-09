@@ -31,6 +31,9 @@ def parse_args():
     parser.add_argument('--weights', dest='pretrained_model',
                         help='initialize with pretrained model weights',
                         default=None, type=str)
+    parser.add_argument('--snapshot', dest='snapshot_model',
+                        help='initialize with pretrained model weights',
+                        default=None, type=str)
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -46,11 +49,13 @@ class SolverWrapper(object):
     use to unnormalize the learned bounding-box regression weights.
     """
 
-    def __init__(self, solver_prototxt, pretrained_model=None):
+    def __init__(self, solver_prototxt, pretrained_model=None, snapshot_model=None):
         """Initialize the SolverWrapper."""
 
         self.solver = caffe.SGDSolver(solver_prototxt)
-        if pretrained_model is not None:
+        if snapshot_model is not None:
+            self.solver.restore(snapshot_model)
+        elif pretrained_model is not None:
             print ('Loading pretrained model '
                    'weights from {:s}').format(pretrained_model)
             self.solver.net.copy_from(pretrained_model)
@@ -73,7 +78,7 @@ if __name__ == '__main__':
         caffe.set_device(args.gpu_id)
 
     sw = SolverWrapper(args.solver,
-                       pretrained_model=args.pretrained_model)
+                       pretrained_model=args.pretrained_model, snapshot_model=args.snapshot_model)
 
     print 'Solving...'
     sw.train_model()

@@ -1,6 +1,6 @@
 # Semantic Image Segmentation by Scale-Adaptive Networks
 
-This code is a implementation of the experiments in the paper Semantic Image Segmentation by Scale-Adaptive Networks. The code is developed based on the Caffe framework.
+This code is a implementation of the experiments in the paper **Semantic Image Segmentation by Scale-Adaptive Networks**. The code is developed based on the Caffe framework.
 
 ### License
 

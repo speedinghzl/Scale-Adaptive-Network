@@ -7,6 +7,18 @@ This code is a implementation of the experiments in the paper **[Semantic Image 
 
 SAN is released under the MIT License (refer to the LICENSE file for details).
 
+### Citing SANet
+
+If you find SANet useful in your research, please consider citing:
+
+    @article{huang2019sanet,
+        title={Semantic Image Segmentation by Scale-Adaptive Networks},
+        author={Huang, Zilong and Wang, Chunyu and Wang, Xinggang and Liu, Wenyu and Wang, Jingdong},
+        journal={IEEE Transactions on Image Processing},
+        year={2019},
+        publisher={IEEE}
+    }
+
 ## Installing dependencies
 
 * **caffe (deeplabv2 version)**: deeplabv2 caffe installation instructions are available at `https://bitbucket.org/aquariusjay/deeplab-public-ver2`. Note, you need to compile **caffe** with python wrapper and support for python layers. Then add the caffe python path into [tools/findcaffe.py](https://github.com/speedinghzl/Scale-Adaptive-Network/blob/master/tools/findcaffe.py#L21).
